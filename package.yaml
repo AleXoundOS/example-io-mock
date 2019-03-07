@@ -25,13 +25,9 @@ ghc-options:
 - -Wall
 - -Wextra
 
-library:
-  source-dirs: src
-
 executables:
   example-io-simulation-exe:
     main:                Main.hs
     source-dirs:         app
     dependencies:
-    - example-io-simulation
     - mtl
