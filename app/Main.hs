@@ -1,76 +1,53 @@
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Main where
 
 import Control.Monad.State
 
+-- | Modeled physical light intensity.
+newtype ModeledLightIntensity = ModeledLightIntensity Double
+  deriving Show
 
--- | Screen image data (for example, it can be Picture from Gloss).
--- For simplicity of the example it's just Float.
-type ScreenImage = Int
+-- | Emitter intensity discrete value.
+type EmitterLightIntensity = Int
 
--- | Camera shot image. Different types to distinguish more easily from
--- ScreenImage.
-type ShotImage = Float
+-- | Sensor measured value of light intensity.
+type MeasuredLightIntensity = Float
 
--- | Draw image on the screen.
-type DrawImage m = ScreenImage -> m ()
+-- | Actions class of emit and measure within shared context.
+class Monad m => MonadEmitMeasure m where
+  -- | Emit light of specified discrete intensity value (emitter is capable of).
+  emit :: EmitterLightIntensity -> m ()
+  -- | Measure physical light intensity.
+  measure :: m MeasuredLightIntensity
 
--- | Take a shot of the screen.
-type TakeShot m = m ShotImage
-
--- | Операции отображения и съёмки в общем контексте. Полезно для симуляции IO
--- при тестировании.
-class Monad m => MonadDrawShot m where
-  drawImage :: DrawImage m
-  takeShot :: TakeShot m
+-- | State Monad for simulation.
+newtype StateEmitMeasure a = StateEmitMeasure (State ModeledLightIntensity a)
 
 
-instance MonadDrawShot IO where
-  drawImage = print
-  takeShot = read <$> getLine
+-- | Real instances of emit and measure. Here, Since the example is imaginary
+-- and we have no actual devices implementation, for demonstration purposes
+-- human interaction is expected.
+instance MonadEmitMeasure IO where
+  emit = print
+  measure = read <$> getLine
 
-instance MonadDrawShot (State ScreenImage) where
-  drawImage = put
-  takeShot = fromIntegral <$> get
+-- | Simulated instances of emit and measure.
+-- instance MonadEmitMeasure (State ModeledLightIntensity) where
+instance MonadEmitMeasure (State ModeledLightIntensity) where
+  emit = put . (ModeledLightIntensity . (* 1.5) . fromIntegral)
+  measure = (\(ModeledLightIntensity x) -> realToFrac x) <$> get
 
-initialScreenImage :: ScreenImage
-initialScreenImage = 0
+initialModel :: ModeledLightIntensity
+initialModel = ModeledLightIntensity 0.0
 
 main :: IO ()
-main = do
-  _ <- runStateT ioSimulationT initialScreenImage
-  return ()
+main = print $ runState functionWithActions initialModel
 
-test = do
-  runState (realFunctionUsingIO drawImage takeShot) initialScreenImage
-
-ioSimulationT :: StateT ScreenImage IO ()
--- ioSimulationT = liftIO $ realFunctionUsingIO (\_ -> print 1.0) (return 5)
-ioSimulationT = do
-  -- draw <- simulateDraw
-  shot <- simulateShot
-  liftIO $ realFunctionUsingIO (\_ -> print 1.0) (liftIO (return shot))
-
--- | Draw image on screen simulation.
-simulateDraw :: MonadDrawShot m => ScreenImage -> StateT ScreenImage m ()
-simulateDraw image = put image
-
--- | Take shot of the screen simulation.
-simulateShot :: MonadDrawShot m => StateT ScreenImage m ShotImage
-simulateShot = fromIntegral <$> get
-
--- | Produces new ScreenImage from ShotImage.
-calibrateImage :: ShotImage -> ScreenImage
-calibrateImage = (+) 1 . round
-
--- | Function that uses functions with real devices. We cannot touch
--- implementation of this function, that's the point.
-realFunctionUsingIO :: MonadDrawShot m => DrawImage m -> TakeShot m -> m ()
-realFunctionUsingIO drawImage' takeShot' = do
-  shotImage1 <- takeShot'
-  drawImage' (calibrateImage shotImage1)
-  shotImage2 <- takeShot'
-  drawImage' (calibrateImage shotImage2)
-  shotImage3 <- takeShot'
-  drawImage' (calibrateImage shotImage3)
+-- | Function that uses actions of emit and measure within a shared context.
+functionWithActions :: MonadEmitMeasure m => m MeasuredLightIntensity
+functionWithActions = do
+  m1 <- measure
+  emit (round m1 + 1)
+  m2 <- measure
+  emit (round m2 + 2)
+  measure

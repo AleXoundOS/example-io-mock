@@ -1,7 +1,7 @@
 name:                example-io-simulation
 version:             0.1.0.0
 github:              "alexoundos/example-io-simulation"
-license:             GPL3
+license:             GPL-3
 author:              Alexander Tomokhov
 maintainer:          "alexoundos@gmail.com"
 copyright:           "2019 Alexander Tomokhov"
@@ -9,13 +9,6 @@ copyright:           "2019 Alexander Tomokhov"
 extra-source-files:
 - README.org
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
 description:         Please see the README on GitHub at <https://github.com/alexoundos/example-io-simulation#readme>
 
 dependencies:
