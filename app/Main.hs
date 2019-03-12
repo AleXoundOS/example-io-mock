@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
--- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Main where
 
 import Control.Monad.State
@@ -24,13 +24,11 @@ class Monad m => MonadEmitMeasure m where
 
 -- | State Monad for simulation.
 newtype EmitMeasureM a = EmitMeasureM (State ModeledLightIntensity a)
-  -- deriving (Functor, Applicative, Monad, MonadState ModeledLightIntensity)
+  deriving (Functor, Applicative, Monad, MonadState ModeledLightIntensity)
 
-instance Functor EmitMeasureM
-instance Applicative EmitMeasureM
-instance Monad EmitMeasureM
-instance MonadState ModeledLightIntensity EmitMeasureM
-instance MonadEmitMeasure (State ModeledLightIntensity)
+instance MonadEmitMeasure (State ModeledLightIntensity) where
+  emit = emit
+  measure = measure
 
 -- | Real instances of emit and measure. Here, Since the example is imaginary
 -- and we have no actual devices implementation, for demonstration purposes
