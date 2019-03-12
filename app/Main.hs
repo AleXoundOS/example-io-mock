@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 -- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
--- {-# LANGUAGE FlexibleInstances #-}
 module Main where
 
 import Control.Monad.State
@@ -30,6 +30,7 @@ instance Functor EmitMeasureM
 instance Applicative EmitMeasureM
 instance Monad EmitMeasureM
 instance MonadState ModeledLightIntensity EmitMeasureM
+instance MonadEmitMeasure (State ModeledLightIntensity)
 
 -- | Real instances of emit and measure. Here, Since the example is imaginary
 -- and we have no actual devices implementation, for demonstration purposes
@@ -49,7 +50,7 @@ initialModel = ModeledLightIntensity 0.0
 
 main :: IO ()
 main =
-  print $ runState ((\(EmitMeasureM s) -> s) functionWithActions) initialModel
+  print $ runState functionWithActions initialModel
 
 -- | Function that uses actions of emit and measure within a shared context.
 functionWithActions :: MonadEmitMeasure m => m MeasuredLightIntensity
