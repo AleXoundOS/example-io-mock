@@ -1,6 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Main where
 
 import Control.Monad.State
@@ -22,24 +20,8 @@ class Monad m => MonadEmitMeasure m where
   -- | Measure physical light intensity.
   measure :: m MeasuredLightIntensity
 
--- | State Monad for simulation.
-newtype EmitMeasureM a = EmitMeasureM (State ModeledLightIntensity a)
-  deriving (Functor, Applicative, Monad, MonadState ModeledLightIntensity)
-
-instance MonadEmitMeasure (State ModeledLightIntensity) where
-  emit = emit
-  measure = measure
-
--- | Real instances of emit and measure. Here, Since the example is imaginary
--- and we have no actual devices implementation, for demonstration purposes
--- human interaction is expected.
-instance MonadEmitMeasure IO where
-  emit = print
-  measure = read <$> getLine
-
 -- | Simulated instances of emit and measure.
--- instance MonadEmitMeasure (State ModeledLightIntensity) where
-instance MonadEmitMeasure EmitMeasureM where
+instance MonadEmitMeasure (State ModeledLightIntensity) where
   emit = put . (ModeledLightIntensity . (* 1.5) . fromIntegral)
   measure = (\(ModeledLightIntensity x) -> realToFrac x) <$> get
 
