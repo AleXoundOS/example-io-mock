@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+-- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+-- {-# LANGUAGE FlexibleInstances #-}
 module Main where
 
 import Control.Monad.State
@@ -21,8 +23,13 @@ class Monad m => MonadEmitMeasure m where
   measure :: m MeasuredLightIntensity
 
 -- | State Monad for simulation.
-newtype StateEmitMeasure a = StateEmitMeasure (State ModeledLightIntensity a)
+newtype EmitMeasureM a = EmitMeasureM (State ModeledLightIntensity a)
+  -- deriving (Functor, Applicative, Monad, MonadState ModeledLightIntensity)
 
+instance Functor EmitMeasureM
+instance Applicative EmitMeasureM
+instance Monad EmitMeasureM
+instance MonadState ModeledLightIntensity EmitMeasureM
 
 -- | Real instances of emit and measure. Here, Since the example is imaginary
 -- and we have no actual devices implementation, for demonstration purposes
@@ -33,7 +40,7 @@ instance MonadEmitMeasure IO where
 
 -- | Simulated instances of emit and measure.
 -- instance MonadEmitMeasure (State ModeledLightIntensity) where
-instance MonadEmitMeasure (State ModeledLightIntensity) where
+instance MonadEmitMeasure EmitMeasureM where
   emit = put . (ModeledLightIntensity . (* 1.5) . fromIntegral)
   measure = (\(ModeledLightIntensity x) -> realToFrac x) <$> get
 
@@ -41,7 +48,8 @@ initialModel :: ModeledLightIntensity
 initialModel = ModeledLightIntensity 0.0
 
 main :: IO ()
-main = print $ runState functionWithActions initialModel
+main =
+  print $ runState ((\(EmitMeasureM s) -> s) functionWithActions) initialModel
 
 -- | Function that uses actions of emit and measure within a shared context.
 functionWithActions :: MonadEmitMeasure m => m MeasuredLightIntensity
